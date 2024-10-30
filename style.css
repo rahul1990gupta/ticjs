@@ -1,0 +1,25 @@
+:root {
+    --cell_size: 200px;
+}
+
+#turn, #result {
+    font-size: 50px;
+    text-align: center;
+}
+
+.board {
+    display: grid;
+    grid-template-columns: repeat(3, var(--cell_size));
+
+}
+.cell {
+   width: var(--cell_size);
+   height: var(--cell_size); 
+   font-size: 150px;
+   font-family: sans-serif;
+}
+
+.board-container {
+    max-width: 600px;
+    margin: 0 auto;
+}
