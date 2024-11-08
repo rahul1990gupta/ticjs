@@ -94,18 +94,17 @@ let Game = (cs) => {
                 state = GameState.WON
                 console.log(winner, " Won!");
             }
+            else if(checkDraw()){
+                state = GameState.DRAW;
+                console.log("Game is Draw.")
+            }
             else {
-                if(checkDraw()){
-                    state = GameState.WON;
-                    console.log("Game is Draw.")
+                state = GameState.PLAYING
+                // if last move was legal
+                if (status){
+                    switchPlayer();
                 }
-                else {
-                    state = GameState.PLAYING
-                    if (status){
-                        switchPlayer();
-                    }
-                    play();
-                }
+                play();
             }
         
             return state;
@@ -116,7 +115,7 @@ let Game = (cs) => {
 }
 
 ConsoleScreen = () => {
-    function readInput(callback){
+    function readInput(currentPlayer, state, callback){
         console.log("Please enter the cell number for player (1-9):", currentPlayer)
         process.stdin.resume();
         process.stdin.setEncoding("utf8");
@@ -171,7 +170,7 @@ DOMWindow = () => {
     return {readInput}
 }
 
-// c = ConsoleScreen();
+ c = ConsoleScreen();
 
-c  = DOMWindow()
+// c  = DOMWindow()
 Game(c).play()
