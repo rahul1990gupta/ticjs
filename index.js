@@ -27,7 +27,7 @@ let GameBoard = () =>{
     return{board, move, displayBoard}
 }
 
-GameState = {
+const GameState = {
     PLAYING: "PLAYING",
     WON: "WON",
     DRAW: "DRAW"
@@ -110,7 +110,7 @@ let Game = (cs) => {
     return {gameBoard, play};
 }
 
-ConsoleScreen = () => {
+const ConsoleScreen = () => {
     function readInput(currentPlayer){
         console.log("Please enter the cell number for player (1-9):", currentPlayer)
 
@@ -133,7 +133,7 @@ ConsoleScreen = () => {
 }
 
 
-DOMWindow = () => {
+const DOMWindow = () => {
     function readInput(currentPlayer) {
         document.getElementById("player").innerText = currentPlayer;
 
@@ -166,7 +166,7 @@ DOMWindow = () => {
     return { readInput };
 };
 
-//  c = ConsoleScreen();
+const c = ConsoleScreen();
 
- c  = DOMWindow()
+// c  = DOMWindow()
 Game(c).play()
