@@ -87,7 +87,10 @@ let Game = (cs) => {
     async function play(){
         while (state == GameState.PLAYING) {
             console.log("inside play", this.turn, this.currentPlayer);
-            const {row, col} = await cs.readInput(this.currentPlayer, this.turn);
+            
+            const {row, col, key} = await cs.readInput(this.currentPlayer);
+            cs.acceptInput(this.currentPlayer, this.turn, key);
+
             console.log("after  input", this.turn, this.currentPlayer);
             
             if(!this.turn) continue;
@@ -100,16 +103,15 @@ let Game = (cs) => {
             if (winner == "O" || winner == "X"){
                 state = GameState.WON
                 console.log(winner, " Won!");
-                socket.emit("game-state", state);  
-                turn = false; 
+                socket.emit("game-state", this.currentPlayer, state);  
             }
             else if(checkDraw()){
                 state = GameState.DRAW;
                 console.log("Game is Draw.")
-                socket.emit("game-state", state);
-                turn = false
+                socket.emit("game-state", this.currentPlayer, state);
             }
             cs.updateResult(this.currentPlayer, state);
+            this.turn = false;   
         }
     }
     return {gameBoard, play, this:currentPlayer, this:turn};
@@ -138,36 +140,39 @@ const ConsoleScreen = () => {
 }
 
 const DOMWindow = () => {
-    function readInput(currentPlayer, turn) {
+    function readInput() {
         return new Promise((resolve) => {
             const cells = document.getElementsByClassName("cell");
 
             function clickHandler(event) {
+                console.log("inside clickhandler", event.target.innerText);
                 const ix = event.target.dataset.key - 1;
+                const key = event.target.dataset.key;
                 const row = Math.floor(ix / 3);
                 const col = ix % 3;
-
-                // Update the cell's text with the current player's symbol
-                if(event.target.innerText == ""){
-                    event.target.innerText = currentPlayer;
-                    socket.emit("move-key", currentPlayer, event.target.dataset.key)
-                }
                 
                 // Clean up event listeners on all cells
                 for (let i = 0; i < cells.length; i++) {
                     cells[i].removeEventListener("click", clickHandler);
                 }
 
-                resolve({ row, col });
+                resolve({ row, col, key });
             }
 
             // Add click event listeners to each cell
-            if (turn){
-                for (let i = 0; i < cells.length; i++) {
-                    cells[i].addEventListener("click", clickHandler);
-                }    
-            }
+            for (let i = 0; i < cells.length; i++) {
+                cells[i].addEventListener("click", clickHandler);
+            }   
         });
+    }
+
+    function acceptInput(currentPlayer, turn, moveKey){
+        const cell = document.querySelector(`button[data-key='${moveKey}']`);
+
+        if(cell.innerText == "" && turn){
+            cell.innerText = currentPlayer;
+            socket.emit("move-key", currentPlayer, moveKey)
+        }
     }
 
     function updateResult(currentPlayer, state){
@@ -176,7 +181,7 @@ const DOMWindow = () => {
         }
     }
 
-    return { readInput, updateResult };
+    return { readInput, updateResult, acceptInput };
 };
 
 var dom  = DOMWindow();
@@ -216,9 +221,6 @@ socket.on("move-key", (fromPlayer, moveKey) => {
 })
 
 socket.on("game-state", (fromPlayer, state) => {
-    g.turn = false
-    g.updateResult(fromPlayer, state)
-    g.updateResult(fromPlayer, state)
-    g.updateResult(fromPlayer, state)
-    g.updateResult(fromPlayer, state)
+    g.turn = false;
+    dom.updateResult(fromPlayer, state);
 })

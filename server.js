@@ -63,7 +63,6 @@ io.on("connection", (socket) =>{
     
     // handle move 
     socket.on("move-key", (fromPlayer, moveKey) => {
-
         var opponent = playersPlaying.get(socket.id);
         console.log("move-key", fromPlayer, moveKey, socket.id, opponent);
         io.to(opponent).emit("move-key", fromPlayer, moveKey);
