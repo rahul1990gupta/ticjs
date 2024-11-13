@@ -3,16 +3,15 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "server": "node run server.js",
-    "client": "node run client.js"
+    "server": "node run server.js"
   },
   "author": "",
   "license": "ISC",
   "keywords": [],
   "description": "",
   "dependencies": {
-    "socketio": "^1.0.0"
-  }
-  // "type": "module"
+    "express": "^4.21.1",
+    "socket.io": "^4.8.1"
+  },
+  "type": "module"
 }

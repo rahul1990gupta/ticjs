@@ -1,5 +1,5 @@
 :root {
-    --cell_size: 200px;
+    --cell_size: 10rem;
 }
 
 #turn, #result {

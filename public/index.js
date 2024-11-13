@@ -1,6 +1,8 @@
 // https://github.com/deucenn/tic-tac-toe
 
 
+const socket = io(); 
+
 let GameBoard = () =>{
     let board = []
     for (let i=0; i < 3; i++){
@@ -36,7 +38,8 @@ const GameState = {
 
 let Game = (cs) => {
     gameBoard = GameBoard();
-    currentPlayer = "O";
+    this.currentPlayer = "O";
+    turn = true;
 
     state = GameState.PLAYING;
 
@@ -86,9 +89,12 @@ let Game = (cs) => {
 
     async function play(){
         while (state == GameState.PLAYING) {
-            const {row, col} = await cs.readInput(currentPlayer);
-    
-            let moveStatus = gameBoard.move(currentPlayer, row, col);
+            console.log("inside play", currentPlayer, this.currentPlayer);
+            const {row, col} = await cs.readInput(this.currentPlayer);
+            
+            if(!turn) continue;
+            
+            let moveStatus = gameBoard.move(this.currentPlayer, row, col);
     
             gameBoard.displayBoard()
         
@@ -96,18 +102,19 @@ let Game = (cs) => {
             if (winner == "O" || winner == "X"){
                 state = GameState.WON
                 console.log(winner, " Won!");
+                socket.emit("game-state", state);  
+                turn = false; 
             }
             else if(checkDraw()){
                 state = GameState.DRAW;
                 console.log("Game is Draw.")
+                socket.emit("game-state", state);
+                turn = false
             }
-            else {
-                // if last move was legal
-                if (moveStatus) switchPlayer();
-            }        
+            cs.updateResult(this.currentPlayer, state);
         }
     }
-    return {gameBoard, play};
+    return {gameBoard, play, this:currentPlayer, switchPlayer};
 }
 
 const ConsoleScreen = () => {
@@ -132,11 +139,8 @@ const ConsoleScreen = () => {
     return {readInput};
 }
 
-
 const DOMWindow = () => {
     function readInput(currentPlayer) {
-        document.getElementById("player").innerText = currentPlayer;
-
         return new Promise((resolve) => {
             const cells = document.getElementsByClassName("cell");
 
@@ -146,8 +150,11 @@ const DOMWindow = () => {
                 const col = ix % 3;
 
                 // Update the cell's text with the current player's symbol
-                event.target.innerText = currentPlayer;
-
+                if(event.target.innerText == ""){
+                    event.target.innerText = currentPlayer;
+                    socket.emit("move-key", currentPlayer, event.target.dataset.key)
+                }
+                
                 // Clean up event listeners on all cells
                 for (let i = 0; i < cells.length; i++) {
                     cells[i].removeEventListener("click", clickHandler);
@@ -163,10 +170,49 @@ const DOMWindow = () => {
         });
     }
 
-    return { readInput };
+    function updateResult(currentPlayer, state){
+        if (state == GameState.DRAW || state == GameState.WON){
+            document.getElementById("result").innerText=currentPlayer + " "+ state;
+        }
+    }
+
+    return { readInput, updateResult };
 };
 
-const c = ConsoleScreen();
+var dom  = DOMWindow();
+var g = Game(dom);
+g.play();
 
-// c  = DOMWindow()
-Game(c).play()
+// Match with another player
+socket.on("matched", (msg) =>  {
+    console.log("matched")
+    document.getElementById("debug").innerText = "Matched with player " + msg
+})
+socket.on("change-player", () => {
+    console.log("change-player")
+    g.currentPlayer = "X";
+    console.log(g.currentPlayer);
+    g.turn = false;
+    document.getElementById("player").innerText = g.currentPlayer;
+})
+
+socket.on("move-key", (fromPlayer, moveKey) => {
+  // update the button 
+  console.log("move-key", fromPlayer, moveKey);
+
+  document.querySelector(`button[key='${moveKey}']`).innerText = fromPlayer;
+
+  // update gameboard
+  const row = Math.floor((moveKey-1) / 3);
+  const col = (moveKey-1) % 3;
+  g.gameBoard.move(fromPlayer, row, col);
+  g.turn = true;
+})
+
+socket.on("game-state", (fromPlayer, state) => {
+    g.turn = false
+    g.updateResult(fromPlayer, state)
+    g.updateResult(fromPlayer, state)
+    g.updateResult(fromPlayer, state)
+    g.updateResult(fromPlayer, state)
+})
