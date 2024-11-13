@@ -13,10 +13,12 @@ let GameBoard = () =>{
         board.push(row);
     }
     function displayBoard() {
+        var rows = []
         for (let i =0; i<3; i++){
-            console.log(board[i].join("|"));
+            row = board[i].join("|");
+            rows.push(row);
         }
-        
+        return rows.join("\n");
     }
     function move(player, row, col){
         if(board[row][col] ==" "){
@@ -37,18 +39,13 @@ const GameState = {
 
 
 let Game = (cs) => {
-    gameBoard = GameBoard();
+
     this.currentPlayer = "O";
-    turn = true;
+    gameBoard = GameBoard();
+    this.turn = true;
 
     state = GameState.PLAYING;
 
-    function switchPlayer(){
-        if (currentPlayer =="O"){
-            currentPlayer = "X";
-        }
-        else currentPlayer ="O";
-    }
     function checkDraw(){
         for (let i=0; i<3; i++){
             for (let j =0; j<3; j++){
@@ -89,10 +86,11 @@ let Game = (cs) => {
 
     async function play(){
         while (state == GameState.PLAYING) {
-            console.log("inside play", currentPlayer, this.currentPlayer);
-            const {row, col} = await cs.readInput(this.currentPlayer);
+            console.log("inside play", this.turn, this.currentPlayer);
+            const {row, col} = await cs.readInput(this.currentPlayer, this.turn);
+            console.log("after  input", this.turn, this.currentPlayer);
             
-            if(!turn) continue;
+            if(!this.turn) continue;
             
             let moveStatus = gameBoard.move(this.currentPlayer, row, col);
     
@@ -114,7 +112,7 @@ let Game = (cs) => {
             cs.updateResult(this.currentPlayer, state);
         }
     }
-    return {gameBoard, play, this:currentPlayer, switchPlayer};
+    return {gameBoard, play, this:currentPlayer, this:turn};
 }
 
 const ConsoleScreen = () => {
@@ -140,7 +138,7 @@ const ConsoleScreen = () => {
 }
 
 const DOMWindow = () => {
-    function readInput(currentPlayer) {
+    function readInput(currentPlayer, turn) {
         return new Promise((resolve) => {
             const cells = document.getElementsByClassName("cell");
 
@@ -164,8 +162,10 @@ const DOMWindow = () => {
             }
 
             // Add click event listeners to each cell
-            for (let i = 0; i < cells.length; i++) {
-                cells[i].addEventListener("click", clickHandler);
+            if (turn){
+                for (let i = 0; i < cells.length; i++) {
+                    cells[i].addEventListener("click", clickHandler);
+                }    
             }
         });
     }
@@ -180,27 +180,33 @@ const DOMWindow = () => {
 };
 
 var dom  = DOMWindow();
-var g = Game(dom);
-g.play();
+var g;
 
 // Match with another player
-socket.on("matched", (msg) =>  {
-    console.log("matched")
-    document.getElementById("debug").innerText = "Matched with player " + msg
-})
-socket.on("change-player", () => {
-    console.log("change-player")
-    g.currentPlayer = "X";
-    console.log(g.currentPlayer);
-    g.turn = false;
-    document.getElementById("player").innerText = g.currentPlayer;
+socket.on("matched", (symbol, opponent) =>  {
+    g = Game(dom);
+
+    console.log("matched", symbol);
+    g.currentPlayer = symbol;
+
+    if(symbol == "X") {
+        g.turn = false;
+    }
+    else {
+        g.turn = true
+    }
+
+    document.getElementById("player").innerText = symbol;
+    document.getElementById("debug").innerText = "Matched with player " + opponent
+    g.play();
+
 })
 
 socket.on("move-key", (fromPlayer, moveKey) => {
   // update the button 
   console.log("move-key", fromPlayer, moveKey);
 
-  document.querySelector(`button[key='${moveKey}']`).innerText = fromPlayer;
+  document.querySelector(`button[data-key='${moveKey}']`).innerText = fromPlayer;
 
   // update gameboard
   const row = Math.floor((moveKey-1) / 3);

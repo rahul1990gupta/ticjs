@@ -41,15 +41,14 @@ io.on("connection", (socket) =>{
         playersPlaying.set(firstPlayer, secondPlayer);
         playersPlaying.set(secondPlayer, firstPlayer);
         console.log("players", firstPlayer, secondPlayer);
-        io.to(firstPlayer).emit("matched", secondPlayer);
-        io.to(secondPlayer).emit("matched", firstPlayer);
-        io.to(secondPlayer).emit("change-player");
+        io.to(firstPlayer).emit("matched", "O", secondPlayer);
+        io.to(secondPlayer).emit("matched", "X", firstPlayer);
     }
 
     socket.on("disconnect", () => {
         if(playersPlaying.has(socket.id)){
-            var partner = playersPlaying.get(socket.id);
-            playersPlaying.delete(partner);
+            var opponent = playersPlaying.get(socket.id);
+            playersPlaying.delete(opponent);
             playersPlaying.delete(socket.id);
         }
     })
@@ -57,15 +56,16 @@ io.on("connection", (socket) =>{
     // handle draw/win event 
     socket.on("game-state", (fromPlayer, state) =>{
         console.log("game-state", fromPlayer, state);
-        var opponent = playersPlaying[socket.id];
+        var opponent = playersPlaying.get(socket.id);
         io.to(opponent).emit("game-state", fromPlayer, state);
     })
 
     
     // handle move 
     socket.on("move-key", (fromPlayer, moveKey) => {
-        console.log("move-key", fromPlayer, moveKey);
-        var opponent = playersPlaying[socket.id];
+
+        var opponent = playersPlaying.get(socket.id);
+        console.log("move-key", fromPlayer, moveKey, socket.id, opponent);
         io.to(opponent).emit("move-key", fromPlayer, moveKey);
     })
 
