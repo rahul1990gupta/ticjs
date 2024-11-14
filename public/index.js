@@ -93,17 +93,18 @@ let Game = (cs) => {
 
             console.log("after  input", this.turn, this.currentPlayer);
             
-            if(!this.turn) continue;
-            
+            if(!this.turn ) continue;
             let moveStatus = gameBoard.move(this.currentPlayer, row, col);
-    
+            
+            if(!moveStatus) continue;
+
             gameBoard.displayBoard()
         
             winner = checkWin();
             if (winner == "O" || winner == "X"){
                 state = GameState.WON
                 console.log(winner, " Won!");
-                socket.emit("game-state", this.currentPlayer, state);  
+                socket.emit("game-state", this.currentPlayer, state);
             }
             else if(checkDraw()){
                 state = GameState.DRAW;
@@ -111,7 +112,7 @@ let Game = (cs) => {
                 socket.emit("game-state", this.currentPlayer, state);
             }
             cs.updateResult(this.currentPlayer, state);
-            this.turn = false;   
+            this.turn = false;
         }
     }
     return {gameBoard, play, this:currentPlayer, this:turn};
@@ -187,6 +188,10 @@ const DOMWindow = () => {
 var dom  = DOMWindow();
 var g;
 
+socket.on("num-players", (num_players) => {
+    document.getElementById("num-players").innerText = num_players
+})
+
 // Match with another player
 socket.on("matched", (symbol, opponent) =>  {
     g = Game(dom);
@@ -202,7 +207,7 @@ socket.on("matched", (symbol, opponent) =>  {
     }
 
     document.getElementById("player").innerText = symbol;
-    document.getElementById("debug").innerText = "Matched with player " + opponent
+    // document.getElementById("debug").innerText = "Matched with player " + opponent
     g.play();
 
 })
@@ -224,3 +229,4 @@ socket.on("game-state", (fromPlayer, state) => {
     g.turn = false;
     dom.updateResult(fromPlayer, state);
 })
+

@@ -51,6 +51,7 @@ io.on("connection", (socket) =>{
             playersPlaying.delete(opponent);
             playersPlaying.delete(socket.id);
         }
+        playersWaiting = playersWaiting.filter(item => item !== socket.id);
     })
 
     // handle draw/win event 

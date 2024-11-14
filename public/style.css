@@ -1,5 +1,5 @@
 :root {
-    --cell_size: 10rem;
+    --cell_size: 8rem;
 }
 
 #turn, #result {
@@ -10,12 +10,12 @@
 .board {
     display: grid;
     grid-template-columns: repeat(3, var(--cell_size));
-
+    margin-top: 10px;
 }
 .cell {
    width: var(--cell_size);
    height: var(--cell_size); 
-   font-size: 150px;
+   font-size: 8rem;
    font-family: sans-serif;
 }
 
